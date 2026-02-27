@@ -1,9 +1,17 @@
+using System.Security.Cryptography;
 using Exterminate.Models;
 
 namespace Exterminate.Services;
 
 internal static class InstallerService
 {
+    private enum InstallState
+    {
+        Installed,
+        Updated,
+        AlreadyInstalled
+    }
+
     public static int Install(AppConfig config, string baseDirectory, string? configSourcePath = null)
     {
         var sourceExecutable = Environment.ProcessPath;
@@ -17,9 +25,30 @@ internal static class InstallerService
         Directory.CreateDirectory(installDirectory);
 
         var destinationExecutable = Path.Combine(installDirectory, "exterminate.exe");
+        var installState = InstallState.Installed;
         if (!PathEquals(sourceExecutable, destinationExecutable))
         {
-            File.Copy(sourceExecutable, destinationExecutable, overwrite: true);
+            if (File.Exists(destinationExecutable))
+            {
+                if (FilesAreIdentical(sourceExecutable, destinationExecutable))
+                {
+                    installState = InstallState.AlreadyInstalled;
+                }
+                else
+                {
+                    File.Copy(sourceExecutable, destinationExecutable, overwrite: true);
+                    installState = InstallState.Updated;
+                }
+            }
+            else
+            {
+                File.Copy(sourceExecutable, destinationExecutable, overwrite: true);
+                installState = InstallState.Installed;
+            }
+        }
+        else
+        {
+            installState = InstallState.AlreadyInstalled;
         }
 
         WriteAliasCommand(installDirectory);
@@ -35,7 +64,8 @@ internal static class InstallerService
         {
             EnsurePathEntry(installDirectory);
         }
-        Console.WriteLine($"Installed: {destinationExecutable}");
+        Console.WriteLine($"Installed path: {destinationExecutable}");
+        Console.WriteLine($"Status: {GetInstallStateText(installState)}");
         Console.WriteLine($"Alias available: {Path.Combine(installDirectory, "ex.cmd")}");
         Console.WriteLine($"Context script: {Path.Combine(installDirectory, "exterminate-context.vbs")}");
         Console.WriteLine("Open a new terminal and run: exterminate \"C:\\path\\to\\target\"");
@@ -230,6 +260,46 @@ internal static class InstallerService
         }
         catch
         {
+        }
+    }
+
+    private static string GetInstallStateText(InstallState installState)
+    {
+        return installState switch
+        {
+            InstallState.Installed => "installed",
+            InstallState.Updated => "updated",
+            InstallState.AlreadyInstalled => "already installed",
+            _ => "installed"
+        };
+    }
+
+    private static bool FilesAreIdentical(string leftPath, string rightPath)
+    {
+        try
+        {
+            var leftInfo = new FileInfo(leftPath);
+            var rightInfo = new FileInfo(rightPath);
+            if (!leftInfo.Exists || !rightInfo.Exists)
+            {
+                return false;
+            }
+
+            if (leftInfo.Length != rightInfo.Length)
+            {
+                return false;
+            }
+
+            using var hash = SHA256.Create();
+            using var leftStream = File.OpenRead(leftPath);
+            using var rightStream = File.OpenRead(rightPath);
+            var leftBytes = hash.ComputeHash(leftStream);
+            var rightBytes = hash.ComputeHash(rightStream);
+            return leftBytes.SequenceEqual(rightBytes);
+        }
+        catch
+        {
+            return false;
         }
     }
 }
