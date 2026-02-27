@@ -74,7 +74,7 @@ static void PrintUsage()
     Console.WriteLine("Usage:");
     Console.WriteLine("  exterminate \"C:\\path\\to\\target\"");
     Console.WriteLine("  ex \"C:\\path\\to\\target\"");
-    Console.WriteLine("  exterminate --install");
-    Console.WriteLine("  exterminate --uninstall");
+    Console.WriteLine("  exterminate --install   (or -install)");
+    Console.WriteLine("  exterminate --uninstall (or -uninstall)");
     Console.WriteLine("  exterminate --config \"C:\\path\\to\\config.json\" \"C:\\path\\to\\target\"");
 }

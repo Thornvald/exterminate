@@ -32,9 +32,13 @@ internal sealed class CliOptions
             switch (normalized)
             {
                 case "--install":
+                case "-install":
+                case "/install":
                     install = true;
                     continue;
                 case "--uninstall":
+                case "-uninstall":
+                case "/uninstall":
                     uninstall = true;
                     continue;
                 case "--elevated-run":
@@ -49,6 +53,8 @@ internal sealed class CliOptions
                     help = true;
                     continue;
                 case "--config":
+                case "-config":
+                case "/config":
                     if (!TryReadValue(args, ref index, out configPath))
                     {
                         error = "Missing value for --config.";
@@ -67,7 +73,8 @@ internal sealed class CliOptions
 
                     continue;
                 default:
-                    if (normalized.StartsWith("--", StringComparison.Ordinal))
+                    if ((key.StartsWith("-", StringComparison.Ordinal) && key.Length > 1)
+                        || key.StartsWith("/", StringComparison.Ordinal))
                     {
                         error = $"Unknown option: {argument}";
                         return false;

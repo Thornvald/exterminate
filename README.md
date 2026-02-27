@@ -33,6 +33,15 @@ exterminate "C:\path\to\target"
 ex "C:\path\to\target"
 exterminate --install
 exterminate --uninstall
+# short forms also work
+exterminate -install
+exterminate -uninstall
+```
+
+`--config` lets you run with a custom config file instead of the default one:
+
+```powershell
+exterminate --config "C:\path\to\config.json" "C:\path\to\target"
 ```
 
 ## Right-Click Context Menu (.reg)

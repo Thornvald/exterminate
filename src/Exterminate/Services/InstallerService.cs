@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using Exterminate.Models;
 
@@ -78,18 +79,25 @@ internal static class InstallerService
         var installDirectory = ResolveInstallDirectory(config);
         RemovePathEntry(installDirectory);
 
-        var currentExecutable = Environment.ProcessPath ?? string.Empty;
-        if (currentExecutable.StartsWith(installDirectory, StringComparison.OrdinalIgnoreCase))
-        {
-            Console.WriteLine("PATH entry removed.");
-            Console.WriteLine($"Delete this folder after closing terminal: {installDirectory}");
-            return 0;
-        }
-
         if (!Directory.Exists(installDirectory))
         {
             Console.WriteLine("Already uninstalled.");
             return 0;
+        }
+
+        var currentExecutable = Environment.ProcessPath ?? string.Empty;
+        if (currentExecutable.StartsWith(installDirectory, StringComparison.OrdinalIgnoreCase))
+        {
+            if (TryScheduleSelfRemoval(installDirectory))
+            {
+                Console.WriteLine("Uninstall started.");
+                Console.WriteLine("The install folder will be removed in a few seconds.");
+                return 0;
+            }
+
+            Console.Error.WriteLine("Failed to schedule self-removal.");
+            Console.WriteLine($"You can remove it manually: {installDirectory}");
+            return 1;
         }
 
         try
@@ -296,6 +304,37 @@ internal static class InstallerService
             var leftBytes = hash.ComputeHash(leftStream);
             var rightBytes = hash.ComputeHash(rightStream);
             return leftBytes.SequenceEqual(rightBytes);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool TryScheduleSelfRemoval(string installDirectory)
+    {
+        try
+        {
+            var tempScriptPath = Path.Combine(Path.GetTempPath(), "exterminate-uninstall-" + Guid.NewGuid().ToString("N") + ".cmd");
+            var scriptLines = new[]
+            {
+                "@echo off",
+                "ping 127.0.0.1 -n 3 >nul",
+                $"rmdir /s /q \"{installDirectory}\"",
+                "del /f /q \"%~f0\" >nul 2>nul"
+            };
+            File.WriteAllLines(tempScriptPath, scriptLines);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/d /c \"\"{tempScriptPath}\"\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+            _ = Process.Start(startInfo);
+            return true;
         }
         catch
         {
