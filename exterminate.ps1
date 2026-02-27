@@ -133,7 +133,12 @@ function Add-DirectoryToUserPath {
 
     [Environment]::SetEnvironmentVariable('Path', $newUserPath, 'User')
 
-    if (-not (Test-PathContainsEntry -PathList $env:Path -Entry $normalizedDirectory)) {
+    $processPath = $env:Path
+    if ($null -eq $processPath) {
+        $processPath = ''
+    }
+
+    if (-not (Test-PathContainsEntry -PathList $processPath -Entry $normalizedDirectory)) {
         if ([string]::IsNullOrWhiteSpace($env:Path)) {
             $env:Path = $normalizedDirectory
         }
