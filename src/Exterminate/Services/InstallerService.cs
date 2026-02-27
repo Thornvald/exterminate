@@ -22,6 +22,8 @@ internal static class InstallerService
             File.Copy(sourceExecutable, destinationExecutable, overwrite: true);
         }
 
+        CopyOptionalContextExecutable(baseDirectory, installDirectory);
+
         WriteAliasCommand(installDirectory);
 
         if (config.CopyDefaultConfigOnInstall)
@@ -196,5 +198,17 @@ internal static class InstallerService
         var aliasPath = Path.Combine(installDirectory, "ex.cmd");
         const string aliasScript = "@echo off\r\nsetlocal\r\n\"%~dp0exterminate.exe\" %*\r\nexit /b %errorlevel%\r\n";
         File.WriteAllText(aliasPath, aliasScript);
+    }
+
+    private static void CopyOptionalContextExecutable(string baseDirectory, string installDirectory)
+    {
+        var contextSourcePath = Path.Combine(baseDirectory, "exterminate-context.exe");
+        if (!File.Exists(contextSourcePath))
+        {
+            return;
+        }
+
+        var contextTargetPath = Path.Combine(installDirectory, "exterminate-context.exe");
+        File.Copy(contextSourcePath, contextTargetPath, overwrite: true);
     }
 }

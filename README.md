@@ -43,7 +43,7 @@ This adds **Exterminate** to:
 - folder background (current folder)
 - drives
 
-The registry commands call `%LOCALAPPDATA%\Exterminate\exterminate.exe`.
+The registry commands call `%LOCALAPPDATA%\Exterminate\exterminate-context.exe` (hidden wrapper, no cmd popup).
 
 To remove those entries:
 
