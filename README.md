@@ -14,6 +14,12 @@ If the command is not yet in PATH, run once:
 .\install.ps1
 ```
 
+Then open a new terminal and run:
+
+```powershell
+exterminate "C:\path\to\target"
+```
+
 ## Config
 
 Edit `config/exterminate.config.json` to tune retries, elevation behavior, and fallback methods.
