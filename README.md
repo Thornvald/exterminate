@@ -35,7 +35,6 @@ exterminate "C:\path\to\target"
 ex "C:\path\to\target"
 exterminate --install
 exterminate --uninstall
-# short forms also work
 exterminate -install
 exterminate -uninstall
 ```
@@ -45,6 +44,8 @@ exterminate -uninstall
 ```powershell
 exterminate --config "C:\path\to\config.json" "C:\path\to\target"
 ```
+
+If `ex` conflicts with another command on your machine, use `exterminate`.
 
 ## Right-Click Context Menu (.reg)
 

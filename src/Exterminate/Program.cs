@@ -49,6 +49,18 @@ if (options.Help)
 
 var config = ConfigService.Load(options.ConfigPath, AppContext.BaseDirectory);
 
+if (InstallerService.IsUninstallPending(AppContext.BaseDirectory) && !options.Install && !options.Uninstall)
+{
+    Console.Error.WriteLine("Uninstall in progress. Please wait and run install again if needed.");
+
+    if (isStandaloneLaunch)
+    {
+        ConsoleWindowService.WaitForUserToClose();
+    }
+
+    return 1;
+}
+
 if (options.Install)
 {
     return InstallerService.Install(config, AppContext.BaseDirectory, options.ConfigPath);
@@ -120,7 +132,9 @@ static void PrintUsage()
     Console.WriteLine("Usage:");
     Console.WriteLine("  exterminate \"C:\\path\\to\\target\"");
     Console.WriteLine("  ex \"C:\\path\\to\\target\"");
-    Console.WriteLine("  exterminate --install   (or -install)");
-    Console.WriteLine("  exterminate --uninstall (or -uninstall)");
+    Console.WriteLine("  exterminate --install");
+    Console.WriteLine("  exterminate -install");
+    Console.WriteLine("  exterminate --uninstall");
+    Console.WriteLine("  exterminate -uninstall");
     Console.WriteLine("  exterminate --config \"C:\\path\\to\\config.json\" \"C:\\path\\to\\target\"");
 }

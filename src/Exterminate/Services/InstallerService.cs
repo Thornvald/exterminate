@@ -6,6 +6,8 @@ namespace Exterminate.Services;
 
 internal static class InstallerService
 {
+    private const string UninstallMarkerFileName = ".uninstalling";
+
     private enum InstallState
     {
         Installed,
@@ -24,6 +26,7 @@ internal static class InstallerService
 
         var installDirectory = ResolveInstallDirectory(config);
         Directory.CreateDirectory(installDirectory);
+        TryDeleteUninstallMarker(installDirectory);
 
         var destinationExecutable = Path.Combine(installDirectory, "exterminate.exe");
         var installState = InstallState.Installed;
@@ -79,11 +82,19 @@ internal static class InstallerService
         var installDirectory = ResolveInstallDirectory(config);
         RemovePathEntry(installDirectory);
 
+        if (IsUninstallPending(installDirectory))
+        {
+            Console.WriteLine("Uninstall already in progress.");
+            return 0;
+        }
+
         if (!Directory.Exists(installDirectory))
         {
             Console.WriteLine("Already uninstalled.");
             return 0;
         }
+
+        TryCreateUninstallMarker(installDirectory);
 
         var currentExecutable = Environment.ProcessPath ?? string.Empty;
         if (currentExecutable.StartsWith(installDirectory, StringComparison.OrdinalIgnoreCase))
@@ -91,7 +102,7 @@ internal static class InstallerService
             if (TryScheduleSelfRemoval(installDirectory))
             {
                 Console.WriteLine("Uninstall started.");
-                Console.WriteLine("The install folder will be removed in a few seconds.");
+                Console.WriteLine("Status: uninstall in progress.");
                 return 0;
             }
 
@@ -112,6 +123,11 @@ internal static class InstallerService
             Console.WriteLine($"You can remove it manually: {installDirectory}");
             return 1;
         }
+    }
+
+    public static bool IsUninstallPending(string baseDirectory)
+    {
+        return File.Exists(Path.Combine(baseDirectory, UninstallMarkerFileName));
     }
 
     public static void EnsurePathEntry(string directoryPath)
@@ -315,20 +331,23 @@ internal static class InstallerService
     {
         try
         {
-            var tempScriptPath = Path.Combine(Path.GetTempPath(), "exterminate-uninstall-" + Guid.NewGuid().ToString("N") + ".cmd");
+            var tempScriptPath = Path.Combine(Path.GetTempPath(), "exterminate-uninstall-" + Guid.NewGuid().ToString("N") + ".ps1");
             var scriptLines = new[]
             {
-                "@echo off",
-                "ping 127.0.0.1 -n 3 >nul",
-                $"rmdir /s /q \"{installDirectory}\"",
-                "del /f /q \"%~f0\" >nul 2>nul"
+                "param([string]$Target)",
+                "$ErrorActionPreference = 'SilentlyContinue'",
+                "for ($attempt = 0; $attempt -lt 120; $attempt++) {",
+                "    Remove-Item -LiteralPath $Target -Recurse -Force -ErrorAction SilentlyContinue",
+                "    if (-not (Test-Path -LiteralPath $Target)) { break }",
+                "    Start-Sleep -Milliseconds 100",
+                "}"
             };
             File.WriteAllLines(tempScriptPath, scriptLines);
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = "cmd.exe",
-                Arguments = $"/d /c \"\"{tempScriptPath}\"\"",
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{tempScriptPath}\" -Target \"{installDirectory}\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 WindowStyle = ProcessWindowStyle.Hidden
@@ -339,6 +358,33 @@ internal static class InstallerService
         catch
         {
             return false;
+        }
+    }
+
+    private static void TryCreateUninstallMarker(string installDirectory)
+    {
+        try
+        {
+            Directory.CreateDirectory(installDirectory);
+            File.WriteAllText(Path.Combine(installDirectory, UninstallMarkerFileName), DateTime.UtcNow.ToString("O"));
+        }
+        catch
+        {
+        }
+    }
+
+    private static void TryDeleteUninstallMarker(string installDirectory)
+    {
+        try
+        {
+            var markerPath = Path.Combine(installDirectory, UninstallMarkerFileName);
+            if (File.Exists(markerPath))
+            {
+                File.Delete(markerPath);
+            }
+        }
+        catch
+        {
         }
     }
 }
