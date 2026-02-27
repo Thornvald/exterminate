@@ -8,6 +8,7 @@ internal sealed class CliOptions
     public bool Uninstall { get; init; }
     public bool Help { get; init; }
     public bool ElevatedRun { get; init; }
+    public bool Headless { get; init; }
 
     public static bool TryParse(string[] args, out CliOptions options, out string? error)
     {
@@ -20,6 +21,7 @@ internal sealed class CliOptions
         var uninstall = false;
         var help = false;
         var elevatedRun = false;
+        var headless = false;
 
         for (var index = 0; index < args.Length; index++)
         {
@@ -37,6 +39,9 @@ internal sealed class CliOptions
                     continue;
                 case "--elevated-run":
                     elevatedRun = true;
+                    continue;
+                case "--headless":
+                    headless = true;
                     continue;
                 case "--help":
                 case "-h":
@@ -101,7 +106,8 @@ internal sealed class CliOptions
             Install = install,
             Uninstall = uninstall,
             Help = help,
-            ElevatedRun = elevatedRun
+            ElevatedRun = elevatedRun,
+            Headless = headless
         };
 
         return true;

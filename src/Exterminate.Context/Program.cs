@@ -25,6 +25,8 @@ var processStartInfo = new ProcessStartInfo
     WorkingDirectory = Environment.CurrentDirectory
 };
 
+processStartInfo.ArgumentList.Add("--headless");
+processStartInfo.ArgumentList.Add("--elevated-run");
 processStartInfo.ArgumentList.Add(args[0]);
 
 using var process = Process.Start(processStartInfo);

@@ -1,6 +1,11 @@
 using Exterminate.Models;
 using Exterminate.Services;
 
+if (OperatingSystem.IsWindows() && ConsoleWindowService.HasHeadlessFlag(args))
+{
+    ConsoleWindowService.HideCurrentConsoleWindow();
+}
+
 if (!OperatingSystem.IsWindows())
 {
     Console.Error.WriteLine("exterminate currently supports Windows only.");
