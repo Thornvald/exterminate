@@ -1,6 +1,6 @@
 # exterminate
 
-`exterminate` is a Windows CLI tool for force-deleting files and folders.
+`exterminate` is a Windows CLI and Windows Context Menu (Registry key) tool for force-deleting files and folders.
 
 Warning: Exterminate permanently deletes targets and does not send them to Recycle Bin.
 
