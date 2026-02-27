@@ -1,0 +1,11 @@
+{
+  "retries": 6,
+  "retryDelayMs": 350,
+  "autoElevate": true,
+  "selfInstallToUserPath": true,
+  "forceTakeOwnership": true,
+  "grantAdministratorsFullControl": true,
+  "grantCurrentUserFullControl": true,
+  "useRobocopyMirrorFallback": true,
+  "useWslFallbackIfAvailable": true
+}
