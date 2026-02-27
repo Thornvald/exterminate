@@ -28,6 +28,29 @@ exterminate --install
 exterminate --uninstall
 ```
 
+## Right-Click Context Menu (.reg)
+
+After `exterminate` is installed, you can add Explorer right-click entries:
+
+```powershell
+reg import .\registry\context-menu-install.reg
+```
+
+This adds **Exterminate** to:
+
+- files
+- folders
+- folder background (current folder)
+- drives
+
+The registry commands call `%LOCALAPPDATA%\Exterminate\exterminate.exe`.
+
+To remove those entries:
+
+```powershell
+reg import .\registry\context-menu-uninstall.reg
+```
+
 ## Build Publish Manually
 
 ```powershell
