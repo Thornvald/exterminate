@@ -10,7 +10,7 @@ From this repository root:
 .\install.cmd
 ```
 
-That command builds a single-file `exterminate.exe`, installs it to `%LOCALAPPDATA%\Exterminate`, and adds that folder to your user PATH.
+That command builds a trimmed single-file `exterminate.exe` (~11 MB), installs it to `%LOCALAPPDATA%\Exterminate`, and adds that folder to your user PATH.
 
 Open a new terminal, then use:
 
@@ -43,7 +43,8 @@ This adds **Exterminate** to:
 - folder background (current folder)
 - drives
 
-The registry commands call `%LOCALAPPDATA%\Exterminate\exterminate-context.exe` (hidden wrapper, no cmd popup).
+The registry commands call `wscript.exe` with `%LOCALAPPDATA%\Exterminate\exterminate-context.vbs` (hidden wrapper, no cmd popup).
+For heavily protected files, run `exterminate` from an elevated terminal.
 
 To remove those entries:
 
@@ -54,7 +55,7 @@ reg import .\registry\context-menu-uninstall.reg
 ## Build Publish Manually
 
 ```powershell
-dotnet publish .\src\Exterminate\Exterminate.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o .\dist\win-x64
+dotnet publish .\src\Exterminate\Exterminate.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial -p:InvariantGlobalization=true -p:EnableCompressionInSingleFile=true -o .\dist\win-x64
 ```
 
 ## Config

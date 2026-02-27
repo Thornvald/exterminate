@@ -5,13 +5,6 @@ namespace Exterminate.Services;
 
 internal static class ConfigService
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true
-    };
-
     public static AppConfig Load(string? explicitConfigPath, string baseDirectory)
     {
         foreach (var candidatePath in GetCandidatePaths(explicitConfigPath, baseDirectory))
@@ -24,7 +17,7 @@ internal static class ConfigService
             try
             {
                 var json = File.ReadAllText(candidatePath);
-                var config = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
+                var config = JsonSerializer.Deserialize(json, ExterminateJsonContext.Default.AppConfig);
                 if (config is not null)
                 {
                     return config;

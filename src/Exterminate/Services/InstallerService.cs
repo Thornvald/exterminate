@@ -22,9 +22,9 @@ internal static class InstallerService
             File.Copy(sourceExecutable, destinationExecutable, overwrite: true);
         }
 
-        CopyOptionalContextExecutable(baseDirectory, installDirectory);
-
         WriteAliasCommand(installDirectory);
+        WriteContextScript(installDirectory);
+        RemoveLegacyContextExecutable(installDirectory);
 
         if (config.CopyDefaultConfigOnInstall)
         {
@@ -37,6 +37,7 @@ internal static class InstallerService
         }
         Console.WriteLine($"Installed: {destinationExecutable}");
         Console.WriteLine($"Alias available: {Path.Combine(installDirectory, "ex.cmd")}");
+        Console.WriteLine($"Context script: {Path.Combine(installDirectory, "exterminate-context.vbs")}");
         Console.WriteLine("Open a new terminal and run: exterminate \"C:\\path\\to\\target\"");
         Console.WriteLine("Short alias also works: ex \"C:\\path\\to\\target\"");
         return 0;
@@ -200,15 +201,35 @@ internal static class InstallerService
         File.WriteAllText(aliasPath, aliasScript);
     }
 
-    private static void CopyOptionalContextExecutable(string baseDirectory, string installDirectory)
+    private static void WriteContextScript(string installDirectory)
     {
-        var contextSourcePath = Path.Combine(baseDirectory, "exterminate-context.exe");
-        if (!File.Exists(contextSourcePath))
+        var scriptPath = Path.Combine(installDirectory, "exterminate-context.vbs");
+        const string script = "Set shell = CreateObject(\"WScript.Shell\")\r\n"
+            + "Set fso = CreateObject(\"Scripting.FileSystemObject\")\r\n"
+            + "basePath = fso.GetParentFolderName(WScript.ScriptFullName)\r\n"
+            + "exePath = fso.BuildPath(basePath, \"exterminate.exe\")\r\n"
+            + "If WScript.Arguments.Count = 0 Then WScript.Quit 1\r\n"
+            + "targetPath = WScript.Arguments.Item(0)\r\n"
+            + "command = Chr(34) & exePath & Chr(34) & \" --headless --elevated-run \" & Chr(34) & targetPath & Chr(34)\r\n"
+            + "exitCode = shell.Run(command, 0, True)\r\n"
+            + "WScript.Quit exitCode\r\n";
+        File.WriteAllText(scriptPath, script);
+    }
+
+    private static void RemoveLegacyContextExecutable(string installDirectory)
+    {
+        var legacyPath = Path.Combine(installDirectory, "exterminate-context.exe");
+        if (!File.Exists(legacyPath))
         {
             return;
         }
 
-        var contextTargetPath = Path.Combine(installDirectory, "exterminate-context.exe");
-        File.Copy(contextSourcePath, contextTargetPath, overwrite: true);
+        try
+        {
+            File.Delete(legacyPath);
+        }
+        catch
+        {
+        }
     }
 }
