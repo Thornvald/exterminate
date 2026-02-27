@@ -9,6 +9,9 @@ internal static class ConsoleWindowService
     [DllImport("kernel32.dll")]
     private static extern IntPtr GetConsoleWindow();
 
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern uint GetConsoleProcessList(uint[] processList, uint processCount);
+
     [DllImport("user32.dll")]
     private static extern bool ShowWindow(IntPtr handle, int command);
 
@@ -23,6 +26,32 @@ internal static class ConsoleWindowService
         if (handle != IntPtr.Zero)
         {
             _ = ShowWindow(handle, SwHide);
+        }
+    }
+
+    public static bool IsStandaloneConsoleSession()
+    {
+        if (Console.IsInputRedirected || Console.IsOutputRedirected || Console.IsErrorRedirected)
+        {
+            return false;
+        }
+
+        var processIds = new uint[2];
+        var processCount = GetConsoleProcessList(processIds, (uint)processIds.Length);
+        return processCount == 1;
+    }
+
+    public static void WaitForUserToClose()
+    {
+        Console.WriteLine();
+        Console.WriteLine("Press any key to close...");
+
+        try
+        {
+            _ = Console.ReadKey(intercept: true);
+        }
+        catch
+        {
         }
     }
 }

@@ -13,6 +13,8 @@ From this repository root:
 That command builds a trimmed single-file `exterminate.exe` (~11 MB), installs it to `%LOCALAPPDATA%\Exterminate`, and adds that folder to your user PATH.
 `install.cmd` now shows install status and keeps the window open when double-clicked.
 
+If you run `exterminate.exe` directly by double-clicking it, it performs install and keeps the window open so status is visible.
+
 If you run from an existing terminal and do not want pause behavior:
 
 ```powershell

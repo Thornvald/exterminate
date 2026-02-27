@@ -1,21 +1,43 @@
 using Exterminate.Models;
 using Exterminate.Services;
 
-if (OperatingSystem.IsWindows() && ConsoleWindowService.HasHeadlessFlag(args))
+var isHeadless = OperatingSystem.IsWindows() && ConsoleWindowService.HasHeadlessFlag(args);
+if (isHeadless)
 {
     ConsoleWindowService.HideCurrentConsoleWindow();
 }
 
+var isStandaloneLaunch = OperatingSystem.IsWindows() && !isHeadless && ConsoleWindowService.IsStandaloneConsoleSession();
+
 if (!OperatingSystem.IsWindows())
 {
     Console.Error.WriteLine("exterminate currently supports Windows only.");
+    if (isStandaloneLaunch)
+    {
+        ConsoleWindowService.WaitForUserToClose();
+    }
+
     return 1;
+}
+
+if (args.Length == 0 && isStandaloneLaunch)
+{
+    var autoConfig = ConfigService.Load(null, AppContext.BaseDirectory);
+    var autoInstallExitCode = InstallerService.Install(autoConfig, AppContext.BaseDirectory);
+    ConsoleWindowService.WaitForUserToClose();
+    return autoInstallExitCode;
 }
 
 if (!CliOptions.TryParse(args, out var options, out var parseError))
 {
     Console.Error.WriteLine(parseError);
     PrintUsage();
+
+    if (isStandaloneLaunch)
+    {
+        ConsoleWindowService.WaitForUserToClose();
+    }
+
     return 1;
 }
 
@@ -40,6 +62,12 @@ if (options.Uninstall)
 if (string.IsNullOrWhiteSpace(options.TargetPath))
 {
     PrintUsage();
+
+    if (isStandaloneLaunch)
+    {
+        ConsoleWindowService.WaitForUserToClose();
+    }
+
     return 1;
 }
 
@@ -51,6 +79,12 @@ try
 catch (Exception exception)
 {
     Console.Error.WriteLine($"Invalid target path: {exception.Message}");
+
+    if (isStandaloneLaunch)
+    {
+        ConsoleWindowService.WaitForUserToClose();
+    }
+
     return 1;
 }
 
@@ -63,10 +97,22 @@ var result = DeleteEngine.Delete(normalizedTargetPath, config);
 if (result.Success)
 {
     Console.WriteLine(result.Message);
+
+    if (isStandaloneLaunch)
+    {
+        ConsoleWindowService.WaitForUserToClose();
+    }
+
     return 0;
 }
 
 Console.Error.WriteLine(result.Message);
+
+if (isStandaloneLaunch)
+{
+    ConsoleWindowService.WaitForUserToClose();
+}
+
 return 1;
 
 static void PrintUsage()
