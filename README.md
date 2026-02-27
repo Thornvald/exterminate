@@ -1,30 +1,46 @@
 # exterminate
 
-Terminal tool to force-delete files and folders on Windows.
+Windows terminal tool to aggressively delete files or folders.
 
-## Usage
+## Quick Install
+
+From this repository root:
+
+```powershell
+.\install.cmd
+```
+
+That command builds a single-file `exterminate.exe`, installs it to `%LOCALAPPDATA%\Exterminate`, and adds that folder to your user PATH.
+
+Open a new terminal, then use:
 
 ```powershell
 exterminate "C:\path\to\target"
+ex "C:\path\to\target"
 ```
 
-If the command is not yet in PATH, run once:
-
-```powershell
-.\install.ps1
-```
-
-Then open a new terminal and run:
+## Commands
 
 ```powershell
 exterminate "C:\path\to\target"
+ex "C:\path\to\target"
+exterminate --install
+exterminate --uninstall
+```
+
+## Build Publish Manually
+
+```powershell
+dotnet publish .\src\Exterminate\Exterminate.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o .\dist\win-x64
 ```
 
 ## Config
 
-Edit `config/exterminate.config.json` to tune retries, elevation behavior, and fallback methods.
+Default config file: `config/exterminate.config.json`.
 
-## Notes
-
-- Uses ownership/ACL reset, PowerShell deletion, cmd deletion, .NET deletion, robocopy mirror fallback, and optional WSL fallback.
-- Optional WSL fallback only runs when `wsl.exe` exists on the machine.
+- retries and delay
+- auto-elevation
+- ACL ownership takeover
+- robocopy fallback
+- optional WSL fallback if `wsl.exe` exists
+- install directory and PATH behavior

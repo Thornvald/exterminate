@@ -3,6 +3,8 @@
   "retryDelayMs": 350,
   "autoElevate": true,
   "selfInstallToUserPath": true,
+  "installDirectory": "%LOCALAPPDATA%\\Exterminate",
+  "copyDefaultConfigOnInstall": true,
   "forceTakeOwnership": true,
   "grantAdministratorsFullControl": true,
   "grantCurrentUserFullControl": true,

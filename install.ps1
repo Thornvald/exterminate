@@ -1,53 +1,33 @@
 [CmdletBinding()]
-param()
+param(
+    [switch]$SkipBuild
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$toolRoot = Split-Path -Parent $PSCommandPath
-$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-if ($null -eq $userPath) {
-    $userPath = ''
+$repoRoot = Split-Path -Parent $PSCommandPath
+$projectPath = Join-Path -Path $repoRoot -ChildPath 'src\Exterminate\Exterminate.csproj'
+$publishDir = Join-Path -Path $repoRoot -ChildPath 'dist\win-x64'
+$exePath = Join-Path -Path $publishDir -ChildPath 'exterminate.exe'
+$configPath = Join-Path -Path $repoRoot -ChildPath 'config\exterminate.config.json'
+
+if (-not (Test-Path -LiteralPath $projectPath)) {
+    throw "Missing project file: $projectPath"
 }
 
-$normalize = {
-    param([string]$value)
-    if ([string]::IsNullOrWhiteSpace($value)) {
-        return $null
-    }
-
-    return $value.Trim().TrimEnd('\\')
+if (-not $SkipBuild) {
+    dotnet publish $projectPath -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o $publishDir
 }
 
-$normalizedToolRoot = & $normalize $toolRoot
-$alreadyInPath = $false
-foreach ($item in ($userPath -split ';')) {
-    $normalizedItem = & $normalize $item
-    if ($null -ne $normalizedItem -and $normalizedItem.Equals($normalizedToolRoot, [StringComparison]::OrdinalIgnoreCase)) {
-        $alreadyInPath = $true
-        break
-    }
+if (-not (Test-Path -LiteralPath $exePath)) {
+    throw "Missing executable: $exePath"
 }
 
-if (-not $alreadyInPath) {
-    $newUserPath = $normalizedToolRoot
-    if (-not [string]::IsNullOrWhiteSpace($userPath)) {
-        $newUserPath = "$userPath;$normalizedToolRoot"
-    }
-
-    [Environment]::SetEnvironmentVariable('Path', $newUserPath, 'User')
-
-    if (-not [string]::IsNullOrWhiteSpace($env:Path)) {
-        $env:Path = "$env:Path;$normalizedToolRoot"
-    }
-    else {
-        $env:Path = $normalizedToolRoot
-    }
-
-    Write-Host "Added to PATH: $normalizedToolRoot"
+if (Test-Path -LiteralPath $configPath) {
+    & $exePath --config $configPath --install
 }
 else {
-    Write-Host "Already in PATH: $normalizedToolRoot"
+    & $exePath --install
 }
-
-Write-Host 'You can now run: exterminate "C:\path\to\target"'
+exit $LASTEXITCODE
