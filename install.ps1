@@ -7,17 +7,19 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repoRoot = Split-Path -Parent $PSCommandPath
-$projectPath = Join-Path -Path $repoRoot -ChildPath 'src\Exterminate\Exterminate.csproj'
-$publishDir = Join-Path -Path $repoRoot -ChildPath 'dist\win-x64'
-$exePath = Join-Path -Path $publishDir -ChildPath 'exterminate.exe'
+$buildDir = Join-Path -Path $repoRoot -ChildPath 'build'
+$distDir = Join-Path -Path $repoRoot -ChildPath 'dist\win-x64'
+$exePath = Join-Path -Path $distDir -ChildPath 'exterminate.exe'
 $configPath = Join-Path -Path $repoRoot -ChildPath 'config\exterminate.config.json'
 
-if (-not (Test-Path -LiteralPath $projectPath)) {
-    throw "Missing project file: $projectPath"
+if (-not (Test-Path -LiteralPath (Join-Path $repoRoot 'CMakeLists.txt'))) {
+    throw "Missing CMakeLists.txt in repo root: $repoRoot"
 }
 
 if (-not $SkipBuild) {
-    dotnet publish $projectPath -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial -p:InvariantGlobalization=true -p:EnableCompressionInSingleFile=true -o $publishDir
+    cmake -S $repoRoot -B $buildDir -DCMAKE_BUILD_TYPE=Release
+    cmake --build $buildDir --config Release
+    cmake --install $buildDir --config Release --prefix $distDir
 }
 
 if (-not (Test-Path -LiteralPath $exePath)) {
@@ -30,4 +32,5 @@ if (Test-Path -LiteralPath $configPath) {
 else {
     & $exePath --install
 }
+
 exit $LASTEXITCODE

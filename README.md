@@ -1,89 +1,87 @@
 # exterminate
 
-Windows terminal tool to aggressively delete files or folders.
+`exterminate` is a Windows CLI tool for force-deleting files and folders.
 
-## Quick Install
+Warning: Exterminate permanently deletes targets and does not send them to Recycle Bin.
 
-From this repository root:
+Every delete action asks for confirmation first.
+
+## Quick install
+
+From repo root:
 
 ```powershell
 .\install.cmd
 ```
 
-That command builds a trimmed single-file `exterminate.exe` (~11 MB), installs it to `%LOCALAPPDATA%\Exterminate`, and adds that folder to your user PATH.
-`install.cmd` now shows install status and keeps the window open when double-clicked.
-
-If you run `exterminate.exe` directly by double-clicking it, it performs install and keeps the window open so status is visible.
-
-If you run from an existing terminal and do not want pause behavior:
-
-```powershell
-.\install.cmd --no-pause
-```
-
-Open a new terminal, then use:
-
-```powershell
-exterminate "C:\path\to\target"
-ex "C:\path\to\target"
-```
+This builds the C++ binary with CMake, installs to `%LOCALAPPDATA%\Exterminate`, and adds that install directory to your user PATH.
 
 ## Commands
 
 ```powershell
 exterminate "C:\path\to\target"
-ex "C:\path\to\target"
 exterminate --install
-exterminate --uninstall
 exterminate -install
+exterminate --uninstall
 exterminate -uninstall
+exterminate --config "C:\path\to\config.json" "C:\path\to\target"
 ```
 
-`--config` lets you run with a custom config file instead of the default one:
+Terminal delete prompt requires confirmation (`YES`, `yes`, or `Y`).
+
+Uninstall confirms simply as:
+
+```text
+Uninstalled exterminate.
+```
+
+## `--config`
+
+Use a custom config file for one run instead of default installed config.
+
+Example:
 
 ```powershell
 exterminate --config "C:\path\to\config.json" "C:\path\to\target"
 ```
 
-If `ex` conflicts with another command on your machine, use `exterminate`.
+## Context menu (.reg)
 
-## Right-Click Context Menu (.reg)
-
-After `exterminate` is installed, you can add Explorer right-click entries:
+Install right-click entries:
 
 ```powershell
 reg import .\registry\context-menu-install.reg
 ```
 
-This adds **Exterminate** to:
-
-- files
-- folders
-- folder background (current folder)
-- drives
-
-The registry commands call `wscript.exe` with `%LOCALAPPDATA%\Exterminate\exterminate-context.vbs` (hidden wrapper, no cmd popup).
-For heavily protected files, run `exterminate` from an elevated terminal.
-
-To remove those entries:
+Remove right-click entries:
 
 ```powershell
 reg import .\registry\context-menu-uninstall.reg
 ```
 
-## Build Publish Manually
+Context menu uses hidden `wscript.exe` launcher (`%LOCALAPPDATA%\Exterminate\exterminate-context.vbs`) to avoid cmd window popups.
+Context menu also asks for confirmation before delete.
+
+## Build manually
 
 ```powershell
-dotnet publish .\src\Exterminate\Exterminate.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=partial -p:InvariantGlobalization=true -p:EnableCompressionInSingleFile=true -o .\dist\win-x64
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+cmake --install build --config Release --prefix .\dist\win-x64
 ```
 
-## Config
+## Config keys
 
-Default config file: `config/exterminate.config.json`.
+Default file: `config/exterminate.config.json`
 
-- retries and delay
-- auto-elevation
-- ACL ownership takeover
-- robocopy fallback
-- optional WSL fallback if `wsl.exe` exists
-- install directory and PATH behavior
+- `retries`
+- `retryDelayMs`
+- `autoElevate`
+- `selfInstallToUserPath`
+- `installDirectory`
+- `copyDefaultConfigOnInstall`
+- `forceTakeOwnership`
+- `grantAdministratorsFullControl`
+- `grantCurrentUserFullControl`
+- `useRobocopyMirrorFallback`
+- `useWslFallbackIfAvailable`

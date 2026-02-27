@@ -25,7 +25,6 @@ if "%EXIT_CODE%"=="0" (
   echo [OK] install finished.
   echo Open a NEW terminal and run:
   echo   exterminate "C:\path\to\target"
-  echo   ex "C:\path\to\target"
 ) else (
   echo [ERROR] install failed. Exit code: %EXIT_CODE%
 )
